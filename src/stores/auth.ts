@@ -57,6 +57,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const handleGoogleCallback = async (code: string) => {
     try {
+      console.log('Sending code to backend for token exchange...')
       // Exchange code for tokens using backend
       const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/google/callback`, {
         method: 'POST',
@@ -66,18 +67,47 @@ export const useAuthStore = defineStore('auth', () => {
         body: JSON.stringify({ code })
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to authenticate with Google')
+      let errorText = ''
+      try {
+        errorText = await response.text()
+      } catch (e) {
+        errorText = 'No error details available'
       }
 
-      const data = await response.json()
+      if (!response.ok) {
+        console.error('Backend auth failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText,
+          apiUrl: import.meta.env.VITE_API_URL
+        })
+        throw new Error(
+          `Failed to authenticate with Google (${response.status}): ${
+            errorText ? JSON.parse(errorText).error : response.statusText
+          }`
+        )
+      }
+
+      let data
+      try {
+        data = JSON.parse(errorText)
+      } catch (e) {
+        console.error('Failed to parse response:', errorText)
+        throw new Error('Invalid response from server')
+      }
+
+      console.log('Received successful response from backend')
       user.value = data.user
       isAuthenticated.value = true
       localStorage.setItem('auth_token', data.token)
       
       return true
     } catch (error) {
-      console.error('Google callback failed:', error)
+      console.error('Google callback failed:', {
+        error,
+        message: error.message,
+        apiUrl: import.meta.env.VITE_API_URL
+      })
       throw error
     }
   }

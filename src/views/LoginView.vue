@@ -86,16 +86,36 @@ onMounted(async () => {
   
   if (code) {
     try {
+      console.log('Received OAuth code, attempting callback...')
       loading.value = true
       error.value = ''
+      
+      // Log the environment variables being used
+      console.log('Environment:', {
+        apiUrl: import.meta.env.VITE_API_URL,
+        appUrl: import.meta.env.VITE_APP_URL,
+        clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID?.substring(0, 10) + '...'
+      })
+      
       await authStore.handleGoogleCallback(code)
+      console.log('Callback successful, redirecting to dashboard...')
       await router.push('/')
     } catch (err) {
-      error.value = 'Failed to complete sign in. Please try again.'
-      console.error('OAuth callback error:', err)
+      console.error('Detailed OAuth callback error:', {
+        error: err,
+        message: err.message,
+        code: code.substring(0, 10) + '...',
+        searchParams: Object.fromEntries(searchParams.entries())
+      })
+      // Show a more detailed error message to the user during development
+      error.value = import.meta.env.DEV 
+        ? `Sign in failed: ${err.message}`
+        : 'Failed to complete sign in. Please try again.'
     } finally {
       loading.value = false
     }
+  } else {
+    console.log('No OAuth code found in URL:', window.location.href)
   }
 })
 </script>
