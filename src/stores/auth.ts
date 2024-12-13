@@ -58,6 +58,16 @@ export const useAuthStore = defineStore('auth', () => {
   const handleGoogleCallback = async (code: string) => {
     try {
       console.log('Sending code to backend for token exchange...')
+      
+      // Log the request configuration (without sensitive data)
+      console.log('Request config:', {
+        url: `${import.meta.env.VITE_API_URL}/auth/google/callback`,
+        codeLength: code.length,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
       // Exchange code for tokens using backend
       const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/google/callback`, {
         method: 'POST',
@@ -67,36 +77,41 @@ export const useAuthStore = defineStore('auth', () => {
         body: JSON.stringify({ code })
       })
 
-      let errorText = ''
-      try {
-        errorText = await response.text()
-      } catch (e) {
-        errorText = 'No error details available'
-      }
+      // First try to get the response as text
+      const responseText = await response.text()
+      console.log('Raw response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '')
+      })
 
       if (!response.ok) {
-        console.error('Backend auth failed:', {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText,
-          apiUrl: import.meta.env.VITE_API_URL
-        })
-        throw new Error(
-          `Failed to authenticate with Google (${response.status}): ${
-            errorText ? JSON.parse(errorText).error : response.statusText
-          }`
-        )
+        let errorMessage = 'Authentication failed'
+        try {
+          const errorData = JSON.parse(responseText)
+          errorMessage = errorData.error || errorMessage
+        } catch (e) {
+          console.error('Failed to parse error response:', e)
+        }
+        throw new Error(errorMessage)
       }
 
+      // Try to parse the successful response
       let data
       try {
-        data = JSON.parse(errorText)
+        data = JSON.parse(responseText)
       } catch (e) {
-        console.error('Failed to parse response:', errorText)
+        console.error('Failed to parse success response:', e)
         throw new Error('Invalid response from server')
       }
 
-      console.log('Received successful response from backend')
+      if (!data.user || !data.token) {
+        console.error('Invalid response structure:', data)
+        throw new Error('Invalid response structure from server')
+      }
+
+      console.log('Successfully processed response')
       user.value = data.user
       isAuthenticated.value = true
       localStorage.setItem('auth_token', data.token)

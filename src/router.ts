@@ -15,6 +15,12 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
+    path: '/tos',
+    name: 'TermsOfService',
+    component: () => import('./views/TermsOfServiceView.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
     path: '/',
     name: 'Dashboard',
     component: () => import('./views/DashboardView.vue'),

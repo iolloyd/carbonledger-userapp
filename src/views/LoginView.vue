@@ -35,7 +35,12 @@
       <div class="text-center text-sm text-gray-500">
         <p>By signing in, you agree to our</p>
         <div class="space-x-2">
-          <a href="#" class="text-green-600 hover:text-green-500">Terms of Service</a>
+          <router-link 
+            to="/tos" 
+            class="text-green-600 hover:text-green-500"
+          >
+            Terms of Service
+          </router-link>
           <span>&middot;</span>
           <router-link 
             to="/privacy-policy" 
