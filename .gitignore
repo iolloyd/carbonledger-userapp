@@ -13,3 +13,4 @@
 .pnp.*
 .aider*
 .env
+.env.local
