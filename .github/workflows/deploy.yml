@@ -37,7 +37,9 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: worker
-          command: d1 execute carbonledger --file ../backend/schema.sql
+          command: |
+            d1 execute carbonledger --file ../backend/setup.sql &&
+            d1 execute carbonledger --file ../backend/schema.sql
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
@@ -56,6 +58,15 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: worker
-          command: d1 execute carbonledger --command "SELECT name FROM sqlite_master WHERE type='table';"
+          command: |
+            echo "=== Database Tables ===" &&
+            d1 execute carbonledger --command "SELECT name FROM sqlite_master WHERE type='table';" &&
+            echo "=== Table Counts ===" &&
+            d1 execute carbonledger --command "
+              SELECT 'users' as table_name, COUNT(*) as count FROM users
+              UNION ALL
+              SELECT 'uk_regions', COUNT(*) FROM uk_regions
+              UNION ALL
+              SELECT 'energy_usage', COUNT(*) FROM energy_usage;"
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }} 
