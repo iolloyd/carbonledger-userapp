@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+  <default-layout>
     <div class="max-w-3xl mx-auto bg-white rounded-lg shadow p-8">
       <h1 class="text-3xl font-bold mb-8">Terms of Service</h1>
       
@@ -54,9 +54,9 @@
         </div>
       </div>
     </div>
-  </div>
+  </default-layout>
 </template>
 
 <script setup lang="ts">
-// No additional logic needed for this static page
+import DefaultLayout from '../layouts/DefaultLayout.vue'
 </script> 

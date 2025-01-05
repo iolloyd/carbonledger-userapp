@@ -1,124 +1,43 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+  <default-layout>
     <div class="max-w-3xl mx-auto bg-white rounded-lg shadow p-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-8">Privacy Policy</h1>
+      <h1 class="text-3xl font-bold mb-8">Privacy Policy</h1>
       
-      <div class="space-y-8">
-        <!-- Introduction -->
+      <div class="space-y-6 text-gray-600">
         <section>
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">1. Introduction</h2>
-          <p class="text-gray-600">
-            This Privacy Policy explains how we collect, use, store, and share your personal information when you use our services. 
-            By using our application, you agree to the terms set out here.
-          </p>
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">1. Information We Collect</h2>
+          <p>We collect information about your energy usage patterns, device information, and account details to provide and improve our services.</p>
         </section>
 
-        <!-- Data We Collect -->
         <section>
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">2. Data We Collect</h2>
-          <p class="text-gray-600 mb-3">We may collect:</p>
-          <ul class="list-disc list-inside text-gray-600 space-y-2">
-            <li>Personal details you provide, like name and email.</li>
-            <li>Usage data, such as login times and features used.</li>
-            <li>Technical data, including IP address and device type.</li>
-          </ul>
-          <p class="text-gray-600 mt-3">We do not collect sensitive personal data unless required by law.</p>
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">2. How We Use Your Information</h2>
+          <p>We use your information to analyze energy consumption patterns, provide personalized recommendations, and improve our services.</p>
         </section>
 
-        <!-- How We Use Your Data -->
         <section>
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">3. How We Use Your Data</h2>
-          <p class="text-gray-600 mb-3">We use your data to:</p>
-          <ul class="list-disc list-inside text-gray-600 space-y-2">
-            <li>Provide and improve our service.</li>
-            <li>Respond to customer support requests.</li>
-            <li>Analyze trends and enhance user experience.</li>
-            <li>Communicate updates and offers (you can opt out at any time).</li>
-          </ul>
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">3. Data Security</h2>
+          <p>We implement appropriate security measures to protect your data from unauthorized access, alteration, or disclosure.</p>
         </section>
 
-        <!-- Sharing Your Data -->
         <section>
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">4. Sharing Your Data</h2>
-          <p class="text-gray-600 mb-3">
-            We do not sell your personal data. We share information only when needed, such as:
-          </p>
-          <ul class="list-disc list-inside text-gray-600 space-y-2">
-            <li>With third-party service providers who help us run the application.</li>
-            <li>When required by law, for example responding to a legal request.</li>
-          </ul>
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">4. Data Sharing</h2>
+          <p>We do not sell your personal data. We may share anonymized, aggregated data for research or analytical purposes.</p>
         </section>
 
-        <!-- Cookies and Tracking -->
         <section>
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">5. Cookies and Tracking</h2>
-          <p class="text-gray-600">
-            We use cookies and similar tools to personalize your experience. You can choose to disable cookies in your browser settings, 
-            but some features may not work as intended.
-          </p>
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">5. Your Rights</h2>
+          <p>You have the right to access, correct, or delete your personal data. Contact us to exercise these rights.</p>
         </section>
 
-        <!-- Data Security -->
         <section>
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">6. Data Security</h2>
-          <p class="text-gray-600">
-            We apply industry-standard security measures to protect your data. However, no online service is completely secure, 
-            and we cannot guarantee absolute protection.
-          </p>
-        </section>
-
-        <!-- Your Rights -->
-        <section>
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">7. Your Rights</h2>
-          <p class="text-gray-600">
-            You have rights over your data, including the right to access, update, or delete it. 
-            To exercise these rights, please contact us.
-          </p>
-        </section>
-
-        <!-- Third-Party Links -->
-        <section>
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">8. Third-Party Links</h2>
-          <p class="text-gray-600">
-            Our service may link to other sites. We are not responsible for their practices, 
-            so review their privacy policies before sharing your data.
-          </p>
-        </section>
-
-        <!-- Updates to This Policy -->
-        <section>
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">9. Updates to This Policy</h2>
-          <p class="text-gray-600">
-            We may update this policy as our service evolves. Changes take effect when posted, 
-            and we will notify you of any significant updates.
-          </p>
-        </section>
-
-        <!-- Contact Us -->
-        <section>
-          <h2 class="text-xl font-semibold text-gray-900 mb-3">10. Contact Us</h2>
-          <p class="text-gray-600">
-            If you have questions, please contact our support team at 
-            <a href="mailto:lloyd@carbonledger.tech" class="text-green-600 hover:text-green-500">
-              lloyd@carbonledger.tech
-            </a>.
-          </p>
-        </section>
-
-        <!-- Acknowledgment -->
-        <section class="border-t pt-8 mt-8">
-          <p class="text-gray-600 italic">
-            By using our service, you acknowledge that you have read and understood this Privacy Policy.
-          </p>
-          <p class="text-gray-500 text-sm mt-4">
-            Last updated: {{ new Date().toLocaleDateString() }}
-          </p>
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">6. Contact Us</h2>
+          <p>For privacy-related inquiries, please contact us at privacy@carbonledger.tech</p>
         </section>
       </div>
     </div>
-  </div>
+  </default-layout>
 </template>
 
 <script setup lang="ts">
-// No additional logic needed
+import DefaultLayout from '../layouts/DefaultLayout.vue'
 </script> 

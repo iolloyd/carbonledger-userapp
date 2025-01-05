@@ -12,16 +12,65 @@
       </div>
       
       <div class="mt-8 space-y-4">
-        <button
-          v-for="provider in providers"
-          :key="provider.name"
-          @click="() => handleLogin(provider.id)"
-          class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-          :disabled="loading"
-        >
-          <component :is="provider.icon" class="w-5 h-5 mr-3" />
-          Sign in with {{ provider.name }}
-        </button>
+        <div v-if="!showVerification" class="space-y-4">
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
+            <div class="mt-1">
+              <input
+                id="email"
+                v-model="email"
+                type="email"
+                required
+                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                placeholder="you@example.com"
+                :disabled="loading"
+              />
+            </div>
+          </div>
+          <button
+            @click="handleEmailSubmit"
+            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            :disabled="loading || !isValidEmail"
+          >
+            {{ loading ? 'Sending...' : 'Continue with Email' }}
+          </button>
+        </div>
+
+        <div v-else class="space-y-4">
+          <div>
+            <label for="code" class="block text-sm font-medium text-gray-700">Verification code</label>
+            <div class="mt-1">
+              <input
+                id="code"
+                v-model="verificationCode"
+                type="text"
+                required
+                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                placeholder="Enter code"
+                :disabled="loading"
+              />
+            </div>
+            <p class="mt-2 text-sm text-gray-500">
+              Enter the verification code sent to {{ email }}
+            </p>
+          </div>
+          <div class="flex space-x-4">
+            <button
+              @click="handleVerifyCode"
+              class="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              :disabled="loading || !verificationCode"
+            >
+              {{ loading ? 'Verifying...' : 'Verify' }}
+            </button>
+            <button
+              @click="showVerification = false"
+              class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              :disabled="loading"
+            >
+              Back
+            </button>
+          </div>
+        </div>
 
         <div v-if="error" class="mt-2 text-red-600 text-sm text-center">
           {{ error }}
@@ -55,9 +104,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Mail, Globe } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
@@ -65,62 +113,50 @@ const authStore = useAuthStore()
 
 const loading = ref(false)
 const error = ref('')
+const email = ref('')
+const verificationCode = ref('')
+const showVerification = ref(false)
 
-const providers = [
-  { id: 'google', name: 'Google', icon: Globe },
-  { id: 'email', name: 'Email', icon: Mail }
-]
+const isValidEmail = computed(() => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)
+})
 
-const handleLogin = async (provider: string) => {
+const handleEmailSubmit = async () => {
   try {
     loading.value = true
     error.value = ''
-    await authStore.login(provider)
+    
+    // Request verification code
+    await authStore.requestEmailCode(email.value)
+    showVerification.value = true
   } catch (err) {
-    error.value = 'Failed to sign in. Please try again.'
-    console.error('Login error:', err)
+    error.value = 'Failed to send verification code. Please try again.'
+    console.error('Email submission error:', err)
   } finally {
     loading.value = false
   }
 }
 
-// Handle OAuth callback
-onMounted(async () => {
-  const searchParams = new URLSearchParams(window.location.search)
-  const code = searchParams.get('code')
-  
-  if (code) {
-    try {
-      console.log('Received OAuth code, attempting callback...')
-      loading.value = true
-      error.value = ''
-      
-      // Log the environment variables being used
-      console.log('Environment:', {
-        apiUrl: import.meta.env.VITE_API_URL,
-        appUrl: import.meta.env.VITE_APP_URL,
-        clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID?.substring(0, 10) + '...'
-      })
-      
-      await authStore.handleGoogleCallback(code)
-      console.log('Callback successful, redirecting to dashboard...')
-      await router.push('/')
-    } catch (err) {
-      console.error('Detailed OAuth callback error:', {
-        error: err,
-        message: err.message,
-        code: code.substring(0, 10) + '...',
-        searchParams: Object.fromEntries(searchParams.entries())
-      })
-      // Show a more detailed error message to the user during development
-      error.value = import.meta.env.DEV 
-        ? `Sign in failed: ${err.message}`
-        : 'Failed to complete sign in. Please try again.'
-    } finally {
-      loading.value = false
+const handleVerifyCode = async () => {
+  try {
+    loading.value = true
+    error.value = ''
+    
+    // Verify code and get token
+    await authStore.verifyEmailCode(email.value, verificationCode.value)
+    
+    // Wait for authentication to be confirmed
+    if (authStore.isAuthenticated) {
+      // Navigate to home (energy usage view)
+      router.push('/')
+    } else {
+      throw new Error('Authentication failed')
     }
-  } else {
-    console.log('No OAuth code found in URL:', window.location.href)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Invalid verification code. Please try again.'
+    console.error('Code verification error:', err)
+  } finally {
+    loading.value = false
   }
-})
+}
 </script>

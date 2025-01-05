@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from './stores/auth'
+import { useAuthStore } from '../stores/auth'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -7,25 +7,25 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('./views/LoginView.vue'),
+      component: () => import('../views/LoginView.vue'),
       meta: { requiresAuth: false }
     },
     {
       path: '/',
       name: 'home',
-      component: () => import('./views/EnergyUsageView.vue'),
+      component: () => import('../views/EnergyUsageView.vue'),
       meta: { requiresAuth: false }
     },
     {
       path: '/tos',
       name: 'tos',
-      component: () => import('./views/TermsOfServiceView.vue'),
+      component: () => import('../views/TermsOfServiceView.vue'),
       meta: { requiresAuth: false }
     },
     {
       path: '/privacy-policy',
       name: 'privacy',
-      component: () => import('./views/PrivacyPolicyView.vue'),
+      component: () => import('../views/PrivacyPolicyView.vue'),
       meta: { requiresAuth: false }
     }
   ]
@@ -52,4 +52,4 @@ router.beforeEach((to) => {
   */
 })
 
-export default router
+export default router 

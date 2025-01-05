@@ -6,175 +6,177 @@ interface User {
   email: string
   name: string
   picture?: string
+  region: string
+  address: string
 }
 
-// Google OAuth configuration
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
-const GOOGLE_REDIRECT_URI = import.meta.env.VITE_APP_URL + '/login'
-
 export const useAuthStore = defineStore('auth', () => {
+  const user = ref<User | null>({
+    id: 'dev-user',
+    email: 'dev@example.com',
+    name: 'Development User',
+    region: 'North West',
+    address: '123 Manchester Business Park, Manchester, M1 1AB'
+  })
+  const isAuthenticated = ref(true) // Always authenticated in development
+
+  /* PRODUCTION CODE (temporarily disabled)
   const user = ref<User | null>(null)
   const isAuthenticated = ref(false)
+  */
 
-  const checkAuth = async () => {
-    try {
-      const token = localStorage.getItem('auth_token')
-      if (token) {
-        // Validate token with backend
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/validate`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        })
-        if (response.ok) {
-          const data = await response.json()
-          isAuthenticated.value = true
-          user.value = data.user
-        } else {
-          await logout()
-        }
-      } else {
-        isAuthenticated.value = false
-        user.value = null
-      }
-    } catch (error) {
-      console.error('Authentication check failed:', error)
-      await logout()
-    }
-  }
+  async function requestEmailCode(email: string) {
+    // Development mode: skip API call
+    return true
 
-  const initializeGoogleLogin = () => {
-    const params = new URLSearchParams({
-      client_id: GOOGLE_CLIENT_ID,
-      redirect_uri: GOOGLE_REDIRECT_URI,
-      response_type: 'code',
-      scope: 'email profile',
-      prompt: 'select_account'
+    /* PRODUCTION CODE (temporarily disabled)
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/email/request`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
     })
 
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to send verification code')
+    }
+    */
   }
 
-  const handleGoogleCallback = async (code: string) => {
+  async function verifyEmailCode(email: string, code: string) {
+    // Development mode: skip API call
+    return true
+
+    /* PRODUCTION CODE (temporarily disabled)
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/email/verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, code }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Invalid verification code')
+    }
+
+    const data = await response.json()
+    await setToken(data.token)
+    */
+  }
+
+  async function setToken(token: string) {
+    // Development mode: skip API call
+    return true
+
+    /* PRODUCTION CODE (temporarily disabled)
     try {
-      console.log('Sending code to backend for token exchange...')
-      
-      // Log the request configuration (without sensitive data)
-      console.log('Request config:', {
-        url: `${import.meta.env.VITE_API_URL}/auth/google/callback`,
-        codeLength: code.length,
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/validate`, {
         headers: {
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${token}`
         }
-      })
-
-      // Exchange code for tokens using backend
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/google/callback`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ code })
-      })
-
-      // First try to get the response as text
-      const responseText = await response.text()
-      console.log('Raw response:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        body: responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '')
       })
 
       if (!response.ok) {
-        let errorMessage = 'Authentication failed'
-        try {
-          const errorData = JSON.parse(responseText)
-          errorMessage = errorData.error || errorMessage
-        } catch (e) {
-          console.error('Failed to parse error response:', e)
-        }
-        throw new Error(errorMessage)
+        throw new Error('Invalid token')
       }
 
-      // Try to parse the successful response
-      let data
-      try {
-        data = JSON.parse(responseText)
-      } catch (e) {
-        console.error('Failed to parse success response:', e)
-        throw new Error('Invalid response from server')
-      }
-
-      if (!data.user || !data.token) {
-        console.error('Invalid response structure:', data)
-        throw new Error('Invalid response structure from server')
-      }
-
-      console.log('Successfully processed response')
+      const data = await response.json()
+      
+      localStorage.setItem('auth_token', token)
       user.value = data.user
       isAuthenticated.value = true
-      localStorage.setItem('auth_token', data.token)
-      
-      return true
     } catch (error) {
-      console.error('Google callback failed:', {
-        error,
-        message: error.message,
-        apiUrl: import.meta.env.VITE_API_URL
-      })
-      throw error
-    }
-  }
-
-  const login = async (provider: string) => {
-    try {
-      if (provider === 'google') {
-        initializeGoogleLogin()
-      }
-      return true
-    } catch (error) {
-      console.error('Login failed:', error)
-      throw error
-    }
-  }
-
-  const logout = async () => {
-    try {
-      const token = localStorage.getItem('auth_token')
-      
-      if (token) {
-        // Logout through backend
-        await fetch(`${import.meta.env.VITE_API_URL}/auth/logout`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        })
-      }
-
+      localStorage.removeItem('auth_token')
       user.value = null
       isAuthenticated.value = false
-      localStorage.removeItem('auth_token')
-      localStorage.clear()
-      sessionStorage.clear()
-
-      return true
-    } catch (error) {
-      console.error('Logout failed:', error)
-      return false
+      throw error
     }
+    */
+  }
+
+  async function updateProfile(profileData: Partial<User>) {
+    // Development mode: update local state
+    if (user.value) {
+      user.value = { ...user.value, ...profileData }
+      return user.value
+    }
+    throw new Error('User not authenticated')
+
+    /* PRODUCTION CODE (temporarily disabled)
+    const token = localStorage.getItem('auth_token')
+    if (!token) throw new Error('Not authenticated')
+
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user/profile`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(profileData),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to update profile')
+    }
+
+    const data = await response.json()
+    user.value = data.user
+    return user.value
+    */
+  }
+
+  function logout() {
+    // Development mode: do nothing
+    return
+
+    /* PRODUCTION CODE (temporarily disabled)
+    localStorage.removeItem('auth_token')
+    user.value = null
+    isAuthenticated.value = false
+    */
   }
 
   // Initialize auth state
-  checkAuth()
+  async function initAuth() {
+    // Development mode: always authenticated
+    user.value = {
+      id: 'dev-user',
+      email: 'dev@example.com',
+      name: 'Development User',
+      region: 'North West',
+      address: '123 Manchester Business Park, Manchester, M1 1AB'
+    }
+    return
+
+    /* PRODUCTION CODE (temporarily disabled)
+    const token = localStorage.getItem('auth_token')
+    if (!token) {
+      logout()
+      return
+    }
+
+    try {
+      await setToken(token)
+    } catch (error) {
+      console.error('Failed to restore auth state:', error)
+      logout()
+    }
+    */
+  }
 
   return {
     user,
     isAuthenticated,
-    checkAuth,
-    login,
+    requestEmailCode,
+    verifyEmailCode,
+    setToken,
     logout,
-    handleGoogleCallback
+    initAuth,
+    updateProfile
   }
 })

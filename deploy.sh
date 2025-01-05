@@ -3,51 +3,30 @@
 # Exit on error
 set -e
 
-# Print debugging information
-echo "Current directory: $(pwd)"
-echo "Directory contents:"
-ls -la
+# Colors for output
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m'
 
-# Clean up any previous builds
-echo "Cleaning up previous builds..."
-rm -rf dist
-rm -rf node_modules
+echo -e "${BLUE}Starting deployment process...${NC}"
 
-# Install dependencies
-echo "Installing dependencies..."
+# Deploy backend worker first
+echo -e "${BLUE}Deploying backend worker...${NC}"
+cd worker
 yarn install
+yarn build
+yarn deploy
+cd ..
 
-# Create production env file if it doesn't exist
-if [ ! -f ".env.production" ]; then
-    echo "Creating .env.production..."
-    cp .env.example .env.production
-fi
+# Deploy frontend to Cloudflare Pages
+echo -e "${BLUE}Deploying frontend...${NC}"
+yarn install
+yarn build
 
-# Build the application
-echo "Building application..."
-NODE_ENV=production yarn build
+# Deploy to Cloudflare Pages using wrangler
+echo -e "${BLUE}Publishing to Cloudflare Pages...${NC}"
+yarn wrangler pages deploy dist --project-name=carbonledger
 
-# Verify build output
-echo "Verifying build output..."
-if [ ! -d "dist" ]; then
-    echo "Error: dist directory not found!"
-    exit 1
-fi
-
-echo "Contents of dist directory:"
-ls -la dist
-
-# Check for index.html
-if [ ! -f "dist/index.html" ]; then
-    echo "Error: dist/index.html not found!"
-    exit 1
-fi
-
-# Deploy to Cloudflare Pages
-echo "Deploying to Cloudflare Pages..."
-wrangler pages deploy dist \
-  --project-name carbonledger-app \
-  --branch production \
-  --commit-dirty=true
-
-echo "Deployment complete!"
+echo -e "${GREEN}Deployment complete!${NC}"
+echo -e "${BLUE}Frontend: https://carbonledger.pages.dev${NC}"
+echo -e "${BLUE}Backend: https://api.carbonledger.com${NC}"

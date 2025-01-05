@@ -41,7 +41,7 @@
         <div class="px-6 py-4 flex justify-between items-center">
           <h2 class="text-xl font-semibold text-gray-800">{{ currentPageTitle }}</h2>
           <div class="text-sm text-gray-600">
-            Welcome, {{ authStore.user?.name || 'User' }}
+            {{ authStore.user?.region || 'Global' }} Region
           </div>
         </div>
       </header>
@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Home, BarChart2, Settings, LogOut } from 'lucide-vue-next'
+import { BarChart2, FileText, Shield, LogOut } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
@@ -65,9 +65,7 @@ const authStore = useAuthStore()
 const isLoggingOut = ref(false)
 
 const navigationItems = [
-  { name: 'Dashboard', path: '/', icon: Home },
-  { name: 'Energy Usage', path: '/energy-usage', icon: BarChart2 },
-  { name: 'Settings', path: '/settings', icon: Settings }
+  { name: `${authStore.user?.region || 'Your'} Energy Usage`, path: '/', icon: BarChart2 }
 ]
 
 const currentPageTitle = computed(() => {
@@ -80,15 +78,9 @@ const handleLogout = async () => {
     isLoggingOut.value = true
     console.log('Starting logout process...')
     
-    const success = await authStore.logout()
-    console.log('Logout result:', success)
-    
-    if (success) {
-      console.log('Navigating to login page...')
-      window.location.href = '/login'
-    } else {
-      console.error('Logout failed')
-    }
+    await authStore.logout()
+    console.log('Logout completed')
+    window.location.href = '/login'
   } catch (error) {
     console.error('Error during logout:', error)
   } finally {
