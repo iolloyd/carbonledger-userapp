@@ -5,10 +5,14 @@ on:
     branches: [main]
     paths:
       - 'worker/**'
+      - 'backend/schema.sql'
+      - 'backend/setup.sql'
   pull_request:
     branches: [main]
     paths:
       - 'worker/**'
+      - 'backend/schema.sql'
+      - 'backend/setup.sql'
 
 jobs:
   deploy-backend:
@@ -21,11 +25,21 @@ jobs:
         with:
           node-version: 18
           cache: yarn
-          cache-dependency-path: worker/yarn.lock
+          cache-dependency-path: '**/yarn.lock'
 
       - name: Install Dependencies
         working-directory: worker
         run: yarn install --frozen-lockfile
+
+      - name: Apply Database Migrations
+        if: github.event_name == 'push'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: worker
+          command: d1 execute carbonledger --file ../backend/schema.sql
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
@@ -33,5 +47,15 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: worker
           command: deploy --env ${{ github.event_name == 'push' && 'production' || 'preview' }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Verify Database Migration
+        if: github.event_name == 'push'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: worker
+          command: d1 execute carbonledger --command "SELECT name FROM sqlite_master WHERE type='table';"
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }} 

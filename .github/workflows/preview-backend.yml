@@ -5,6 +5,8 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'worker/**'
+      - 'backend/schema.sql'
+      - 'backend/setup.sql'
 
 jobs:
   preview:
@@ -20,11 +22,20 @@ jobs:
         with:
           node-version: 18
           cache: yarn
-          cache-dependency-path: worker/yarn.lock
+          cache-dependency-path: '**/yarn.lock'
 
       - name: Install Dependencies
         working-directory: worker
         run: yarn install --frozen-lockfile
+
+      - name: Apply Preview Database Migrations
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: worker
+          command: d1 execute carbonledger-preview --file ../backend/schema.sql
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy Worker Preview
         uses: cloudflare/wrangler-action@v3
@@ -35,15 +46,25 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      - name: Verify Preview Database Migration
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: worker
+          command: d1 execute carbonledger-preview --command "SELECT name FROM sqlite_master WHERE type='table';"
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Comment Preview URL
         uses: actions/github-script@v6
         with:
           script: |
             const apiUrl = 'https://api-preview.carbonledger.com';
+            const dbVerification = process.env.DB_VERIFICATION || 'Database verification not available';
             
             github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.pull_request.number,
-              body: `🚀 Backend Preview deployment is ready!\n\n- API: ${apiUrl}`
+              body: `🚀 Backend Preview deployment is ready!\n\n- API: ${apiUrl}\n\nDatabase Tables:\n\`\`\`\n${dbVerification}\n\`\`\`'
             }); 
